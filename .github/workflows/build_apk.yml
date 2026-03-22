@@ -54,34 +54,29 @@ jobs:
           buildozer --version
           which python
           python --version
-
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            android_app/.buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('android_app/buildozer.spec') }}
-          restore-keys: |
-            buildozer-${{ runner.os }}-
+          java -version
 
       - name: Build APK
         working-directory: android_app
         run: |
+          set -o pipefail
           buildozer -v android debug 2>&1 | tee build.log
+          echo "Buildozer exit code: $?"
 
       - name: Find APK files
         if: always()
         run: |
           echo "=== Searching for APK files ==="
           find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+          echo ""
           echo "=== Listing android_app/bin/ ==="
-          ls -la android_app/bin/ 2>/dev/null || echo "bin/ directory not found"
-          echo "=== Listing buildozer output ==="
-          ls -la android_app/.buildozer/android/platform/build-*/dists/*/build/outputs/apk/ 2>/dev/null || echo "No buildozer APK output found"
-          
-      - name: Upload build log on failure
-        if: failure()
+          ls -laR android_app/bin/ 2>/dev/null || echo "bin/ directory not found"
+          echo ""
+          echo "=== Checking buildozer output ==="
+          find android_app/.buildozer -name "*.apk" -type f 2>/dev/null || echo "No APK in .buildozer"
+
+      - name: Upload build log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
@@ -89,13 +84,13 @@ jobs:
           retention-days: 7
 
       - name: Upload APK artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: dc-debug-apk
           path: |
-            android_app/bin/*.apk
-            android_app/.buildozer/**/build/outputs/apk/**/*.apk
+            android_app/bin/
+            android_app/.buildozer/**/outputs/apk/
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Create Release (on tag)
