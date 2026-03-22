@@ -45,7 +45,7 @@ jobs:
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install buildozer==1.5.0 cython==0.29.36
+          pip install buildozer==1.5.0 cython==3.0.11
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Verify tools
@@ -54,6 +54,7 @@ jobs:
           buildozer --version
           which python
           python --version
+          cython --version
           java -version
 
       - name: Build APK
@@ -62,6 +63,16 @@ jobs:
           set -o pipefail
           buildozer -v android debug 2>&1 | tee build.log
           echo "Buildozer exit code: $?"
+
+      - name: Show build log tail on failure
+        if: failure()
+        working-directory: android_app
+        run: |
+          echo "=== LAST 200 LINES OF BUILD LOG ==="
+          tail -200 build.log || echo "No build.log found"
+          echo ""
+          echo "=== ERRORS IN BUILD LOG ==="
+          grep -i -E "(error|exception|failed|traceback)" build.log | tail -50 || echo "No errors found in log"
 
       - name: Find APK files
         if: always()
