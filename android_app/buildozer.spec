@@ -13,10 +13,10 @@ source.include_exts = py,png,jpg,kv,atlas,json
 version = 1.0.0
 
 # Python dependencies
-# KivyMD 1.2.0 works with Kivy 2.2.1 — removed materialyoucolor/asyncgui/asynckivy/exceptiongroup
-# (those are KivyMD 2.x deps that were incorrectly listed)
-# websockets removed (no p4a recipe), pillow removed (not essential)
-requirements = python3,kivy==2.2.1,kivymd==1.2.0,yt-dlp,requests,certifi,urllib3,charset-normalizer,idna,mutagen,pyjnius
+# KivyMD 1.1.1 is the last stable release compatible with Kivy 2.2.1 + p4a master
+# pyjnius is auto-provided by p4a, do NOT list it here
+# websockets/pillow removed (no p4a recipe / not essential)
+requirements = python3,kivy==2.2.1,kivymd==1.1.1,yt-dlp,requests,certifi,urllib3,charset-normalizer,idna,mutagen
 
 # Orientation and display
 orientation = portrait
@@ -35,8 +35,9 @@ android.allow_backup = True
 android.gradle_dependencies = 
 android.enable_androidx = True
 
-# p4a configuration
-p4a.branch = develop
+# p4a configuration — use master (stable, Python <=3.12)
+# DO NOT use develop — it builds hostpython3 with Python 3.14 which breaks Cython
+p4a.branch = master
 
 # App icon and presplash
 icon.filename = %(source.dir)s/icon.png
