@@ -1,42 +1,79 @@
 #!/bin/bash
 # ──────────────────────────────────────────────────────────
-# Build APK using Google Colab
+# DC v2.0 — Build APK using Google Colab
 # ──────────────────────────────────────────────────────────
-# 
+#
 # HOW TO USE:
 # 1. Open Google Colab: https://colab.research.google.com
 # 2. Create a new notebook
-# 3. Upload your android_app folder to Colab
-# 4. Paste and run each section below in separate cells
+# 3. Paste EACH section below into SEPARATE cells and run them in order
 #
 # ──────────────────────────────────────────────────────────
 
-# ── CELL 1: Install Buildozer and dependencies ──
-echo "=== Installing build dependencies ==="
+# ════════════════════════════════════════════════════════════
+# CELL 1: Install system dependencies
+# ════════════════════════════════════════════════════════════
+
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
     build-essential git ffmpeg libffi-dev libssl-dev \
     python3-venv zip unzip autoconf automake libtool \
-    pkg-config zlib1g-dev libncurses5-dev cmake \
-    openjdk-17-jdk
+    pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev \
+    cmake openjdk-17-jdk lld
 
-pip install -q buildozer cython==0.29.36
+# Set Java 17
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+echo "Java: $(java -version 2>&1 | head -1)"
 
-# ── CELL 2: Upload and navigate to project ──
-# Upload your android_app folder first, then:
-# cd /content/android_app
+# ════════════════════════════════════════════════════════════
+# CELL 2: Install Buildozer and Cython
+# ════════════════════════════════════════════════════════════
 
-# ── CELL 3: Build the APK ──
-echo "=== Building APK (this takes 15-30 minutes on first run) ==="
-buildozer -v android debug
+pip install -q buildozer==1.5.0 cython==0.29.33
 
-# ── CELL 4: Download the APK ──
-echo "=== APK built! Downloading... ==="
-from google.colab import files
-import glob
-apk_files = glob.glob('bin/*.apk')
-if apk_files:
-    files.download(apk_files[0])
-    print(f"Downloaded: {apk_files[0]}")
-else:
-    print("ERROR: No APK found. Check build logs above.")
+echo "Buildozer: $(buildozer --version 2>&1)"
+echo "Cython: $(cython --version 2>&1)"
+
+# ════════════════════════════════════════════════════════════
+# CELL 3: Clone the repo
+# ════════════════════════════════════════════════════════════
+
+cd /content
+rm -rf DC
+git clone https://github.com/SONUVERMA11/DC.git
+cd DC/android_app
+echo "Ready to build in: $(pwd)"
+ls -la
+
+# ════════════════════════════════════════════════════════════
+# CELL 4: Build the APK (takes 10-20 minutes first time)
+# ════════════════════════════════════════════════════════════
+
+cd /content/DC/android_app
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+echo "=== Starting build ==="
+buildozer -v android debug 2>&1 | tee build.log
+echo ""
+echo "=== Build exit code: $? ==="
+
+# ════════════════════════════════════════════════════════════
+# CELL 5: Download the APK
+# ════════════════════════════════════════════════════════════
+
+# Run this cell as Python (not bash):
+#
+# import glob
+# from google.colab import files
+#
+# apk_files = glob.glob('/content/DC/android_app/bin/*.apk')
+# if apk_files:
+#     for apk in apk_files:
+#         print(f"Downloading: {apk}")
+#         files.download(apk)
+# else:
+#     print("No APK found. Check build.log above for errors.")
+#     print("Searching for APK files...")
+#     import subprocess
+#     result = subprocess.run(['find', '/content/DC', '-name', '*.apk'], capture_output=True, text=True)
+#     print(result.stdout or "None found")
