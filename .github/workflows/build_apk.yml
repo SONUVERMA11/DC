@@ -42,6 +42,12 @@ jobs:
             openjdk-17-jdk \
             lld
 
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip setuptools wheel
@@ -56,6 +62,7 @@ jobs:
           python --version
           cython --version
           java -version
+          echo "JAVA_HOME=$JAVA_HOME"
 
       - name: Build APK
         working-directory: android_app
