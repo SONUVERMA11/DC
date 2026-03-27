@@ -1,9 +1,22 @@
-# 🎵 YouTube MP3 Downloader
+# 🎵 DC — YouTube MP3 Downloader
 
-A modern desktop application to download high-quality music from YouTube in MP3 format with embedded thumbnails and metadata.
+A modern application to download high-quality music from YouTube in MP3 format with embedded thumbnails and metadata. Available for **Desktop** and **Android**.
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)
 ![License](https://img.shields.io/badge/License-MIT-green)
+![Android](https://img.shields.io/badge/Android-APK-brightgreen?logo=android)
+
+## 📱 Android App (v2.0)
+
+The Android app features a **premium Material Design 3** interface with:
+- Gradient header & glassmorphism cards
+- AMOLED dark & light theme toggle
+- Status chips with color-coded download states
+- Firebase App Distribution for easy APK sharing
+
+📥 **Get the APK:** [GitHub Actions](https://github.com/SONUVERMA11/DC/actions) → download latest artifact
+
+See [`android_app/README.md`](android_app/README.md) for build instructions.
 
 ## ✨ Features
 
@@ -24,7 +37,7 @@ A modern desktop application to download high-quality music from YouTube in MP3 
    - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
    - Or install via: `winget install FFmpeg` / `choco install ffmpeg`
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Desktop)
 
 ### Option 1: Double-click launcher
 ```
@@ -47,10 +60,10 @@ python app.py
 
 ## 🛠 Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Language | Python 3 |
-| Download Engine | yt-dlp |
-| Audio Conversion | FFmpeg |
-| GUI Framework | CustomTkinter |
-| Image Processing | Pillow |
+| Component | Desktop | Android |
+|-----------|---------|---------|
+| Language | Python 3 | Python 3 |
+| Download Engine | yt-dlp | yt-dlp |
+| Audio Conversion | FFmpeg | FFmpeg (optional) |
+| GUI Framework | CustomTkinter | KivyMD 1.1.1 |
+| Distribution | — | Firebase App Distribution |

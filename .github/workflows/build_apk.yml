@@ -83,15 +83,15 @@ jobs:
 
       - name: Find APK files
         if: always()
+        id: find_apk
         run: |
           echo "=== Searching for APK files ==="
-          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+          APK_PATH=$(find . -name "*.apk" -type f 2>/dev/null | head -1)
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "Found: $APK_PATH"
           echo ""
           echo "=== Listing android_app/bin/ ==="
           ls -laR android_app/bin/ 2>/dev/null || echo "bin/ directory not found"
-          echo ""
-          echo "=== Checking buildozer output ==="
-          find android_app/.buildozer -name "*.apk" -type f 2>/dev/null || echo "No APK in .buildozer"
 
       - name: Upload build log
         if: always()
@@ -110,6 +110,25 @@ jobs:
             android_app/.buildozer/**/outputs/apk/
           if-no-files-found: warn
           retention-days: 30
+
+      # ── Firebase App Distribution ──
+      - name: Upload to Firebase App Distribution
+        if: success() && env.FIREBASE_APP_ID != ''
+        continue-on-error: true
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: testers
+          file: ${{ steps.find_apk.outputs.APK_PATH }}
+          releaseNotes: |
+            DC v2.0.0 — YouTube MP3 Downloader
+            • Modernized premium UI with gradient header
+            • New app icon
+            • Dark & light theme support
+            • Built from commit ${{ github.sha }}
+        env:
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
 
       - name: Create Release (on tag)
         if: startsWith(github.ref, 'refs/tags/')

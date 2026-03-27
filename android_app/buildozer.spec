@@ -10,7 +10,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 
 # Version
-version = 1.0.0
+version = 2.0.0
 
 # Python dependencies
 # KivyMD 1.1.1 is the last stable release compatible with Kivy 2.2.1 + p4a master
@@ -43,7 +43,7 @@ p4a.branch = master
 icon.filename = %(source.dir)s/icon.png
 
 # Android specific theming
-android.presplash_color = #0a0a11
+android.presplash_color = #0D0D14
 
 # Log level
 [buildozer]

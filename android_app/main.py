@@ -1,6 +1,6 @@
 """
-DC — YouTube MP3 Downloader Android App
-Modern Material Design app built with KivyMD.
+DC v2.0 — YouTube MP3 Downloader Android App
+Premium Material Design 3 app built with KivyMD.
 """
 
 import os
@@ -18,6 +18,8 @@ from kivy.properties import (
 from kivy.utils import platform
 from kivy.core.clipboard import Clipboard
 from kivy.uix.boxlayout import BoxLayout
+from kivy.animation import Animation
+from kivy.graphics import Color, RoundedRectangle, Rectangle, Line, Ellipse
 
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
@@ -40,40 +42,65 @@ QUALITY_MAP = {"320kbps (Best)": "320", "256kbps": "256", "192kbps": "192", "128
 
 KV = '''
 #:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
 #:import Window kivy.core.window.Window
 #:import Animation kivy.animation.Animation
+
+# ══════════════════════ Download Card ══════════════════════
 
 <DownloadCard>:
     orientation: "vertical"
     size_hint_y: None
-    height: dp(128)
-    padding: [dp(16), dp(12), dp(16), dp(12)]
-    spacing: dp(4)
-    radius: dp(16), dp(16), dp(16), dp(16)
-    elevation: 0.6
+    height: dp(136)
+    padding: [dp(16), dp(14), dp(16), dp(12)]
+    spacing: dp(6)
+    radius: dp(20), dp(20), dp(20), dp(20)
+    elevation: 0
     md_bg_color: app.card_color
-    line_color: app.border_color
 
+    canvas.before:
+        # Accent stripe on left
+        Color:
+            rgba: root.bar_color
+        RoundedRectangle:
+            pos: self.x, self.y
+            size: dp(4), self.height
+            radius: [dp(20), 0, 0, dp(20)]
+
+    # ── Title row ──
     BoxLayout:
         size_hint_y: None
-        height: dp(44)
-        spacing: dp(10)
+        height: dp(46)
+        spacing: dp(12)
 
-        MDIconButton:
-            icon: "music-note"
-            theme_icon_color: "Custom"
-            icon_color: app.theme_cls.primary_color
+        # Music icon with colored bg
+        BoxLayout:
             size_hint: None, None
-            size: dp(40), dp(40)
+            size: dp(42), dp(42)
             pos_hint: {"center_y": 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.bar_color[0], root.bar_color[1], root.bar_color[2], 0.15
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(12)]
 
+            MDIconButton:
+                icon: root.status_icon
+                theme_icon_color: "Custom"
+                icon_color: root.bar_color
+                size_hint: None, None
+                size: dp(42), dp(42)
+
+        # Title + artist
         BoxLayout:
             orientation: "vertical"
             spacing: dp(2)
 
             Label:
                 text: root.title
-                font_size: sp(15)
+                font_size: sp(14)
                 bold: True
                 color: app.text_color
                 text_size: self.size
@@ -85,8 +112,8 @@ KV = '''
                 height: dp(22)
 
             Label:
-                text: f"{root.artist}  •  {root.duration}"
-                font_size: sp(12)
+                text: f"{root.artist}  ·  {root.duration}"
+                font_size: sp(11.5)
                 color: app.text_secondary
                 text_size: self.size
                 halign: "left"
@@ -97,42 +124,81 @@ KV = '''
                 height: dp(18)
 
         MDIconButton:
-            icon: "close-circle-outline"
+            icon: "close"
             theme_icon_color: "Custom"
-            icon_color: [0.86, 0.15, 0.15, 0.7]
+            icon_color: app.text_muted
             size_hint: None, None
-            size: dp(36), dp(36)
+            size: dp(34), dp(34)
             pos_hint: {"center_y": 0.5}
             on_release: app.cancel_download(root.task_id)
 
-    MDProgressBar:
-        value: root.progress_value
-        color: root.bar_color
-        size_hint_y: None
-        height: dp(6)
-
+    # ── Progress bar ──
     BoxLayout:
         size_hint_y: None
-        height: dp(22)
-        spacing: dp(8)
+        height: dp(8)
+        padding: [0, dp(2)]
 
-        Label:
-            text: root.status_text
-            font_size: sp(11)
-            bold: True
-            color: root.status_color
-            text_size: self.size
-            halign: "left"
-            valign: "center"
+        canvas.before:
+            Color:
+                rgba: app.progress_bg
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(4)]
+
+        Widget:
+            size_hint_x: root.progress_value / 100 if root.progress_value > 0 else 0.001
+            canvas.before:
+                Color:
+                    rgba: root.bar_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(4)]
+
+    # ── Status row ──
+    BoxLayout:
+        size_hint_y: None
+        height: dp(24)
+        spacing: dp(6)
+
+        # Status chip
+        BoxLayout:
+            size_hint: None, None
+            size: self.minimum_width + dp(16), dp(22)
+            pos_hint: {"center_y": 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.12
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(11)]
+
+            Label:
+                text: root.status_text
+                font_size: sp(10.5)
+                bold: True
+                color: root.status_color
+                size_hint_x: None
+                width: self.texture_size[0]
+                padding: [dp(8), 0]
+                text_size: None, self.height
+                valign: "center"
+
+        Widget:
 
         Label:
             text: root.speed_text
-            font_size: sp(11)
+            font_size: sp(10.5)
             color: app.text_secondary
             text_size: self.size
             halign: "right"
             valign: "center"
+            size_hint_x: 0.5
 
+
+# ══════════════════════ Root Screen ══════════════════════
 
 <RootScreen>:
     md_bg_color: app.bg_color
@@ -140,28 +206,85 @@ KV = '''
     BoxLayout:
         orientation: "vertical"
 
-        # ── Top App Bar ──
-        MDTopAppBar:
-            title: "DC"
-            md_bg_color: app.bar_bg_color
-            specific_text_color: app.text_color
-            elevation: 2
-            left_action_items: [["music-note-eighth", lambda x: None]]
-            right_action_items: [["theme-light-dark", lambda x: app.toggle_theme()], ["information-outline", lambda x: app.show_about()]]
-
-        # ── URL Input Card ──
-        MDCard:
-            orientation: "vertical"
+        # ── Gradient Header ──
+        BoxLayout:
             size_hint_y: None
-            height: dp(140)
-            padding: [dp(16), dp(14)]
-            spacing: dp(10)
-            radius: dp(16), dp(16), dp(16), dp(16)
-            elevation: 0.4
-            md_bg_color: app.card_color
-            line_color: app.border_color
-            pos_hint: {"center_x": 0.5}
-            size_hint_x: 0.95
+            height: dp(110)
+            padding: [dp(22), dp(16), dp(22), dp(12)]
+            orientation: "vertical"
+
+            canvas.before:
+                Color:
+                    rgba: app.header_grad_start
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # Top row: logo + actions
+            BoxLayout:
+                size_hint_y: None
+                height: dp(42)
+
+                BoxLayout:
+                    spacing: dp(8)
+                    size_hint_x: None
+                    width: self.minimum_width
+
+                    MDIconButton:
+                        icon: "music-note-eighth"
+                        theme_icon_color: "Custom"
+                        icon_color: app.accent_color
+                        size_hint: None, None
+                        size: dp(38), dp(38)
+                        pos_hint: {"center_y": 0.5}
+
+                    Label:
+                        text: "DC"
+                        font_size: sp(24)
+                        bold: True
+                        color: app.text_color
+                        size_hint: None, None
+                        size: self.texture_size
+                        pos_hint: {"center_y": 0.5}
+
+                Widget:
+
+                MDIconButton:
+                    icon: "theme-light-dark"
+                    theme_icon_color: "Custom"
+                    icon_color: app.text_secondary
+                    size_hint: None, None
+                    size: dp(38), dp(38)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: app.toggle_theme()
+
+                MDIconButton:
+                    icon: "information-outline"
+                    theme_icon_color: "Custom"
+                    icon_color: app.text_secondary
+                    size_hint: None, None
+                    size: dp(38), dp(38)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: app.show_about()
+
+            # Subtitle
+            Label:
+                text: "YouTube MP3 Downloader"
+                font_size: sp(13)
+                color: app.text_secondary
+                text_size: self.size
+                halign: "left"
+                valign: "top"
+                size_hint_y: None
+                height: dp(20)
+                padding: [dp(2), 0]
+
+        # ── URL Input Area ──
+        BoxLayout:
+            size_hint_y: None
+            height: dp(56)
+            padding: [dp(16), dp(8), dp(16), dp(4)]
+            spacing: dp(8)
 
             MDTextField:
                 id: url_input
@@ -170,108 +293,172 @@ KV = '''
                 size_hint_x: 1
                 fill_color_normal: app.input_bg_color
                 fill_color_focus: app.input_bg_color
-                line_color_focus: app.theme_cls.primary_color
+                line_color_focus: app.accent_color
                 hint_text_color_normal: app.text_muted
                 text_color_normal: app.text_color
                 text_color_focus: app.text_color
                 on_text_validate: app.add_url()
 
-            BoxLayout:
-                size_hint_y: None
-                height: dp(42)
-                spacing: dp(8)
-
-                MDRaisedButton:
-                    id: quality_btn
-                    text: "320kbps"
-                    md_bg_color: app.input_bg_color
-                    text_color: app.text_color
-                    elevation: 0
-                    size_hint_x: 0.3
-                    on_release: app.open_quality_menu(self)
-
-                MDRaisedButton:
-                    text: "Paste"
-                    md_bg_color: app.input_bg_color
-                    text_color: app.text_color
-                    elevation: 0
-                    size_hint_x: 0.25
-                    on_release: app.paste_url()
-
-                MDRaisedButton:
-                    id: add_btn
-                    text: "  +  Add  "
-                    md_bg_color: app.theme_cls.primary_color
-                    elevation: 0.5
-                    size_hint_x: 0.45
-                    on_release: app.add_url()
-
-        # ── Queue Header ──
+        # ── Action Buttons Row ──
         BoxLayout:
             size_hint_y: None
-            height: dp(48)
-            padding: [dp(20), dp(6)]
+            height: dp(46)
+            padding: [dp(16), dp(2), dp(16), dp(6)]
+            spacing: dp(8)
+
+            MDRaisedButton:
+                id: quality_btn
+                text: "320k"
+                md_bg_color: app.chip_bg_color
+                text_color: app.text_color
+                elevation: 0
+                size_hint_x: 0.22
+                font_size: sp(12)
+                on_release: app.open_quality_menu(self)
+
+            MDRaisedButton:
+                text: "Paste"
+                md_bg_color: app.chip_bg_color
+                text_color: app.text_color
+                elevation: 0
+                size_hint_x: 0.22
+                font_size: sp(12)
+                on_release: app.paste_url()
+
+            MDRaisedButton:
+                id: add_btn
+                text: "+  Add"
+                md_bg_color: app.accent_color
+                text_color: [1, 1, 1, 1]
+                elevation: 0
+                size_hint_x: 0.56
+                font_size: sp(13)
+                on_release: app.add_url()
+
+        # ── Queue Section Header ──
+        BoxLayout:
+            size_hint_y: None
+            height: dp(44)
+            padding: [dp(20), dp(6), dp(16), dp(2)]
             spacing: dp(8)
 
             Label:
                 id: queue_label
-                text: "Downloads (0)"
-                font_size: sp(16)
+                text: "Queue"
+                font_size: sp(17)
                 bold: True
                 color: app.text_color
                 text_size: self.size
                 halign: "left"
                 valign: "center"
 
-            MDRaisedButton:
-                id: download_all_btn
-                text: "Download All"
-                md_bg_color: app.theme_cls.primary_color
-                size_hint: None, None
-                size: dp(130), dp(36)
-                pos_hint: {"center_y": 0.5}
-                on_release: app.download_all()
+            Label:
+                id: queue_count
+                text: "0 items"
+                font_size: sp(12)
+                color: app.text_muted
+                text_size: self.size
+                halign: "left"
+                valign: "center"
+                size_hint_x: 0.3
+
+            Widget:
 
             MDIconButton:
                 icon: "delete-sweep-outline"
                 theme_icon_color: "Custom"
                 icon_color: app.text_muted
                 size_hint: None, None
-                size: dp(40), dp(40)
+                size: dp(36), dp(36)
                 pos_hint: {"center_y": 0.5}
                 on_release: app.clear_queue()
 
-        # ── Download List ──
+        # ── DOWNLOAD LIST ──
         ScrollView:
             do_scroll_x: False
-            bar_width: dp(4)
-            bar_color: app.theme_cls.primary_color
+            bar_width: dp(3)
+            bar_color: app.accent_color
 
             BoxLayout:
                 id: download_list
                 orientation: "vertical"
                 size_hint_y: None
                 height: self.minimum_height
-                padding: [dp(10), dp(4)]
-                spacing: dp(8)
+                padding: [dp(12), dp(4), dp(12), dp(80)]
+                spacing: dp(10)
 
-                Label:
-                    id: placeholder
-                    text: "Paste a YouTube URL above to get started"
-                    font_size: sp(14)
-                    color: app.text_muted
+                # Empty state
+                BoxLayout:
+                    id: empty_state
+                    orientation: "vertical"
                     size_hint_y: None
-                    height: dp(120)
+                    height: dp(200)
+                    spacing: dp(8)
                     opacity: 1
+
+                    Widget:
+                        size_hint_y: 0.3
+
+                    MDIconButton:
+                        icon: "music-note-plus"
+                        theme_icon_color: "Custom"
+                        icon_color: app.text_muted
+                        size_hint: None, None
+                        size: dp(64), dp(64)
+                        pos_hint: {"center_x": 0.5}
+                        disabled: True
+
+                    Label:
+                        text: "No downloads yet"
+                        font_size: sp(16)
+                        bold: True
+                        color: app.text_muted
+                        halign: "center"
+                        size_hint_y: None
+                        height: dp(24)
+
+                    Label:
+                        text: "Paste a YouTube URL above to get started"
+                        font_size: sp(12)
+                        color: app.text_muted
+                        halign: "center"
+                        size_hint_y: None
+                        height: dp(20)
+
+                    Widget:
+                        size_hint_y: 0.3
+
+        # ── Floating Download Button ──
+        BoxLayout:
+            size_hint_y: None
+            height: dp(64)
+            padding: [dp(16), dp(8), dp(16), dp(8)]
+
+            canvas.before:
+                Color:
+                    rgba: app.bg_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            MDRaisedButton:
+                id: download_all_btn
+                text: "▶  Download All"
+                md_bg_color: app.accent_color
+                text_color: [1, 1, 1, 1]
+                elevation: 0
+                size_hint_x: 1
+                font_size: sp(15)
+                on_release: app.download_all()
 
         # ── Status Bar ──
         BoxLayout:
             size_hint_y: None
-            height: dp(36)
+            height: dp(30)
             padding: [dp(20), dp(4)]
             canvas.before:
                 Color:
-                    rgba: app.bar_bg_color
+                    rgba: app.status_bar_color
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -279,11 +466,20 @@ KV = '''
             Label:
                 id: status_label
                 text: "Ready"
-                font_size: sp(11)
+                font_size: sp(10.5)
                 color: app.text_muted
                 text_size: self.size
                 halign: "left"
                 valign: "center"
+
+            Label:
+                text: "v2.0"
+                font_size: sp(10)
+                color: app.text_muted
+                text_size: self.size
+                halign: "right"
+                valign: "center"
+                size_hint_x: 0.2
 '''
 
 
@@ -299,7 +495,8 @@ class DownloadCard(MDCard):
     progress_value = NumericProperty(0)
     speed_text = StringProperty("")
     status_color = ColorProperty([0.5, 0.55, 0.65, 1])
-    bar_color = ColorProperty([0.49, 0.23, 0.93, 1])
+    bar_color = ColorProperty([0.47, 0.26, 0.95, 1])  # Electric violet
+    status_icon = StringProperty("music-note")
 
 
 # ─────────────────── Root Screen ─────────────────────────
@@ -311,18 +508,21 @@ class RootScreen(MDScreen):
 # ─────────────────── Main Application ────────────────────
 
 class YouTubeMP3App(MDApp):
-    """Main KivyMD application."""
+    """Main KivyMD application — DC v2.0."""
 
     # ── Theme colors (reactive properties) ──
-    bg_color = ColorProperty([0.04, 0.04, 0.07, 1])
-    card_color = ColorProperty([0.08, 0.09, 0.16, 1])
-    bar_bg_color = ColorProperty([0.06, 0.07, 0.12, 1])
-    input_bg_color = ColorProperty([0.1, 0.11, 0.2, 1])
-    border_color = ColorProperty([0.16, 0.18, 0.29, 1])
-    text_color = ColorProperty([0.95, 0.96, 0.97, 1])
-    text_secondary = ColorProperty([0.58, 0.64, 0.72, 1])
-    text_muted = ColorProperty([0.39, 0.45, 0.55, 1])
-    progress_bg = ColorProperty([0.12, 0.14, 0.25, 1])
+    bg_color = ColorProperty([0.05, 0.05, 0.08, 1])
+    card_color = ColorProperty([0.09, 0.09, 0.14, 1])
+    header_grad_start = ColorProperty([0.07, 0.06, 0.14, 1])
+    input_bg_color = ColorProperty([0.11, 0.11, 0.18, 1])
+    chip_bg_color = ColorProperty([0.13, 0.13, 0.2, 1])
+    border_color = ColorProperty([0.16, 0.17, 0.25, 1])
+    text_color = ColorProperty([0.95, 0.96, 0.98, 1])
+    text_secondary = ColorProperty([0.55, 0.58, 0.68, 1])
+    text_muted = ColorProperty([0.38, 0.42, 0.52, 1])
+    progress_bg = ColorProperty([0.12, 0.12, 0.2, 1])
+    accent_color = ColorProperty([0.47, 0.26, 0.95, 1])   # #7842F2
+    status_bar_color = ColorProperty([0.04, 0.04, 0.07, 1])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -347,24 +547,32 @@ class YouTubeMP3App(MDApp):
     # ─────────── Theme Management ───────────
 
     def _apply_dark_theme(self):
-        self.bg_color = [0.04, 0.04, 0.07, 1]
-        self.card_color = [0.08, 0.09, 0.16, 1]
-        self.bar_bg_color = [0.06, 0.07, 0.12, 1]
-        self.input_bg_color = [0.1, 0.11, 0.2, 1]
-        self.border_color = [0.16, 0.18, 0.29, 1]
-        self.text_color = [0.95, 0.96, 0.97, 1]
-        self.text_secondary = [0.58, 0.64, 0.72, 1]
-        self.text_muted = [0.39, 0.45, 0.55, 1]
+        self.bg_color = [0.05, 0.05, 0.08, 1]
+        self.card_color = [0.09, 0.09, 0.14, 1]
+        self.header_grad_start = [0.07, 0.06, 0.14, 1]
+        self.input_bg_color = [0.11, 0.11, 0.18, 1]
+        self.chip_bg_color = [0.13, 0.13, 0.2, 1]
+        self.border_color = [0.16, 0.17, 0.25, 1]
+        self.text_color = [0.95, 0.96, 0.98, 1]
+        self.text_secondary = [0.55, 0.58, 0.68, 1]
+        self.text_muted = [0.38, 0.42, 0.52, 1]
+        self.progress_bg = [0.12, 0.12, 0.2, 1]
+        self.accent_color = [0.47, 0.26, 0.95, 1]
+        self.status_bar_color = [0.04, 0.04, 0.07, 1]
 
     def _apply_light_theme(self):
-        self.bg_color = [0.96, 0.97, 0.98, 1]
+        self.bg_color = [0.97, 0.97, 0.98, 1]
         self.card_color = [1, 1, 1, 1]
-        self.bar_bg_color = [0.95, 0.95, 0.97, 1]
-        self.input_bg_color = [0.93, 0.94, 0.96, 1]
-        self.border_color = [0.85, 0.87, 0.9, 1]
-        self.text_color = [0.12, 0.14, 0.18, 1]
-        self.text_secondary = [0.4, 0.45, 0.52, 1]
-        self.text_muted = [0.55, 0.6, 0.68, 1]
+        self.header_grad_start = [0.95, 0.94, 0.98, 1]
+        self.input_bg_color = [0.93, 0.93, 0.96, 1]
+        self.chip_bg_color = [0.91, 0.91, 0.95, 1]
+        self.border_color = [0.86, 0.87, 0.9, 1]
+        self.text_color = [0.1, 0.1, 0.15, 1]
+        self.text_secondary = [0.42, 0.44, 0.52, 1]
+        self.text_muted = [0.58, 0.6, 0.66, 1]
+        self.progress_bg = [0.88, 0.88, 0.92, 1]
+        self.accent_color = [0.42, 0.2, 0.88, 1]
+        self.status_bar_color = [0.94, 0.94, 0.96, 1]
 
     def toggle_theme(self):
         self._is_dark = not self._is_dark
@@ -393,7 +601,7 @@ class YouTubeMP3App(MDApp):
 
     def _set_quality(self, quality_text):
         self.quality = QUALITY_MAP.get(quality_text, "320")
-        self.root.ids.quality_btn.text = quality_text.split(" ")[0]
+        self.root.ids.quality_btn.text = quality_text.split(" ")[0].replace("bps", "k")
         self.quality_menu.dismiss()
 
     # ─────────── URL Actions ───────────
@@ -472,14 +680,16 @@ class YouTubeMP3App(MDApp):
         return os.path.join(os.path.expanduser("~"), "Music", "YT Downloads")
 
     def _reset_add_btn(self):
-        self.root.ids.add_btn.text = "  +  Add  "
+        self.root.ids.add_btn.text = "+  Add"
         self.root.ids.add_btn.disabled = False
 
     # ─────────── Queue Management ───────────
 
     def _add_to_queue(self, task):
-        self.root.ids.placeholder.opacity = 0
-        self.root.ids.placeholder.height = 0
+        # Hide empty state
+        empty = self.root.ids.empty_state
+        empty.opacity = 0
+        empty.height = 0
 
         self.tasks[task.task_id] = task
         card = DownloadCard(
@@ -494,7 +704,8 @@ class YouTubeMP3App(MDApp):
         self._set_status(f"Added: {task.title[:40]}")
 
     def _update_queue_label(self):
-        self.root.ids.queue_label.text = f"Downloads ({len(self.tasks)})"
+        count = len(self.tasks)
+        self.root.ids.queue_count.text = f"{count} item{'s' if count != 1 else ''}"
 
     def cancel_download(self, task_id):
         task = self.tasks.get(task_id)
@@ -511,8 +722,12 @@ class YouTubeMP3App(MDApp):
             self.root.ids.download_list.remove_widget(widget)
         self.tasks.clear()
         self.widgets.clear()
-        self.root.ids.placeholder.opacity = 1
-        self.root.ids.placeholder.height = dp(120)
+
+        # Show empty state
+        empty = self.root.ids.empty_state
+        empty.opacity = 1
+        empty.height = dp(200)
+
         self._update_queue_label()
         self._set_status("Queue cleared")
 
@@ -525,7 +740,7 @@ class YouTubeMP3App(MDApp):
             return
 
         self.root.ids.download_all_btn.disabled = True
-        self.root.ids.download_all_btn.text = "Downloading..."
+        self.root.ids.download_all_btn.text = "⏳  Downloading..."
         self._set_status(f"Starting {len(queued)} downloads...")
 
         for task in queued:
@@ -570,27 +785,55 @@ class YouTubeMP3App(MDApp):
         card.progress_value = task.progress
         card.status_text = task.status.value
 
-        status_colors = {
-            DownloadStatus.QUEUED: [0.5, 0.55, 0.65, 1],
-            DownloadStatus.FETCHING_INFO: [0.96, 0.62, 0.04, 1],
-            DownloadStatus.DOWNLOADING: [0.49, 0.23, 0.93, 1],
-            DownloadStatus.CONVERTING: [0.96, 0.62, 0.04, 1],
-            DownloadStatus.COMPLETE: [0.13, 0.77, 0.37, 1],
-            DownloadStatus.ERROR: [0.94, 0.27, 0.27, 1],
-            DownloadStatus.CANCELLED: [0.5, 0.55, 0.65, 1],
+        # Status-specific styling
+        style_map = {
+            DownloadStatus.QUEUED: {
+                "color": [0.5, 0.55, 0.65, 1],
+                "bar": [0.47, 0.26, 0.95, 1],
+                "icon": "clock-outline",
+            },
+            DownloadStatus.FETCHING_INFO: {
+                "color": [0.96, 0.68, 0.12, 1],
+                "bar": [0.96, 0.68, 0.12, 1],
+                "icon": "magnify",
+            },
+            DownloadStatus.DOWNLOADING: {
+                "color": [0.25, 0.58, 1.0, 1],
+                "bar": [0.25, 0.58, 1.0, 1],
+                "icon": "download",
+            },
+            DownloadStatus.CONVERTING: {
+                "color": [0.96, 0.68, 0.12, 1],
+                "bar": [0.96, 0.68, 0.12, 1],
+                "icon": "cog",
+            },
+            DownloadStatus.COMPLETE: {
+                "color": [0.18, 0.8, 0.44, 1],
+                "bar": [0.18, 0.8, 0.44, 1],
+                "icon": "check-circle",
+            },
+            DownloadStatus.ERROR: {
+                "color": [0.95, 0.3, 0.3, 1],
+                "bar": [0.95, 0.3, 0.3, 1],
+                "icon": "alert-circle",
+            },
+            DownloadStatus.CANCELLED: {
+                "color": [0.5, 0.55, 0.65, 1],
+                "bar": [0.5, 0.55, 0.65, 1],
+                "icon": "close-circle",
+            },
         }
-        card.status_color = status_colors.get(task.status, [0.5, 0.55, 0.65, 1])
 
-        bar_colors = {
-            DownloadStatus.COMPLETE: [0.13, 0.77, 0.37, 1],
-            DownloadStatus.ERROR: [0.94, 0.27, 0.27, 1],
-        }
-        card.bar_color = bar_colors.get(task.status, [0.49, 0.23, 0.93, 1])
+        style = style_map.get(task.status, style_map[DownloadStatus.QUEUED])
+        card.status_color = style["color"]
+        card.bar_color = style["bar"]
+        card.status_icon = style["icon"]
 
+        # Speed / info text
         if task.status == DownloadStatus.DOWNLOADING:
             speed = task.speed or ""
             eta = f"  ETA {task.eta}" if task.eta else ""
-            card.speed_text = f"{speed}{eta}  •  {int(task.progress)}%"
+            card.speed_text = f"{speed}{eta}  ·  {int(task.progress)}%"
         elif task.status == DownloadStatus.COMPLETE:
             card.speed_text = "✓ Done"
         elif task.status == DownloadStatus.ERROR:
@@ -607,7 +850,7 @@ class YouTubeMP3App(MDApp):
                      if t.status in (DownloadStatus.DOWNLOADING, DownloadStatus.CONVERTING,
                                      DownloadStatus.FETCHING_INFO))
         done = sum(1 for t in self.tasks.values() if t.status == DownloadStatus.COMPLETE)
-        self._set_status(f"Active: {active}  •  Complete: {done}/{len(self.tasks)}")
+        self._set_status(f"Active: {active}  ·  Complete: {done}/{len(self.tasks)}")
 
     def _check_all_done(self):
         self._update_status_bar()
@@ -616,7 +859,7 @@ class YouTubeMP3App(MDApp):
                                      DownloadStatus.FETCHING_INFO, DownloadStatus.QUEUED))
         if active == 0:
             self.root.ids.download_all_btn.disabled = False
-            self.root.ids.download_all_btn.text = "Download All"
+            self.root.ids.download_all_btn.text = "▶  Download All"
             done = sum(1 for t in self.tasks.values() if t.status == DownloadStatus.COMPLETE)
             self._set_status(f"All done! {done} files downloaded ✓")
 
@@ -627,13 +870,14 @@ class YouTubeMP3App(MDApp):
 
     def show_about(self):
         dialog = MDDialog(
-            title="DC",
+            title="DC v2.0",
             text=(
                 "Download high-quality MP3 audio from YouTube\n"
                 "with embedded metadata and artwork.\n\n"
-                "• Supports playlists and multiple URLs\n"
+                "• Supports playlists & batch URLs\n"
                 "• Quality: up to 320kbps\n"
-                "• Preserves thumbnails & metadata\n\n"
+                "• Preserves thumbnails & metadata\n"
+                "• Dark & light themes\n\n"
                 "Powered by yt-dlp"
             ),
             buttons=[MDFlatButton(text="CLOSE", on_release=lambda x: dialog.dismiss())],
