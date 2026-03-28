@@ -1,0 +1,26 @@
+[project]
+name = "dc"
+version = "2.0.0"
+description = "YouTube MP3 Downloader"
+requires-python = ">=3.9"
+dependencies = [
+    "flet>=0.25.0",
+    "yt-dlp",
+    "requests",
+    "mutagen",
+]
+
+[tool.flet]
+org = "com.dc"
+product = "DC"
+company = "DC"
+
+[tool.flet.android]
+package = "com.dc.musicdl"
+permissions = [
+    "android.permission.INTERNET",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.ACCESS_NETWORK_STATE",
+]
+adaptive_icon_background = "#1A1A2E"
