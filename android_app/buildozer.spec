@@ -10,12 +10,11 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 
 # Version
-version = 2.0.0
+version = 2.0.1
 
 # Python dependencies
 # KivyMD 1.1.1 is the last stable release compatible with Kivy 2.2.1 + p4a master
 # pyjnius is auto-provided by p4a, do NOT list it here
-# websockets/pillow removed (no p4a recipe / not essential)
 requirements = python3,kivy==2.2.1,kivymd==1.1.1,yt-dlp,requests,certifi,urllib3,charset-normalizer,idna,mutagen
 
 # Orientation and display
@@ -43,7 +42,10 @@ p4a.branch = master
 icon.filename = %(source.dir)s/icon.png
 
 # Android specific theming
-android.presplash_color = #0D0D14
+android.presplash_color = #0F0F17
+
+# Logcat — capture Python errors for debugging
+android.logcat_filters = *:S python:D
 
 # Log level
 [buildozer]
